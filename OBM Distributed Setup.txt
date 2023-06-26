@@ -1,0 +1,85 @@
+1- DPS e GW
+ovcert -list
+	identificar Node Cert e Trust Store
+	identificar OVRG Cert e Trust Store
+
+
+2- DPS
+ovconfchg -ns sec.cm -set ASYMMETRIC_KEY_LENGTH 4096
+ovconfchg -ns sec.core -set HASH_ALGO eSHA256
+cscript.exe “%OvInstallDir%”\lbin\seccs\install\MigrateAsymKey.vbs -createCAcert
+ovcert -list
+openssl x509 -in CA_<ovrg_coreid>_4096_cert.pem –text   - outra janela de dos em modo admin e ir ate a pasta respectiva
+							C:\OBM\ProgramData\HP BTO Software\shared\server\datafiles\sec\ks\
+
+
+3- DPS
+ovc -status
+ovc -start ovcs - caso nao esteja running
+
+
+4- GW e OA
+ovcert –updatetrusted
+
+
+5- DPS
+cscript.exe “%OvInstallDir%”\lbin\seccs\install\MigrateAsymKey.vbs –createNodecert
+#$TOPAZ_HOME/opr/bin/opr-configure-certificates.bat -il    --- Abrir nova janela de DOS em modo admin e ir ate a pasta respectiva (C:\OBM\HPBSM\opr\bin) - correr o comando atras indicado
+
+
+6- GW
+ovconfchg -ns sec.cm -set ASYMMETRIC_KEY_LENGTH 4096
+ovconfchg -ns sec.core -set HASH_ALGO eSHA256
+ovcert –remove <coreid> (eliminar so o node cert)
+
+7- OA
+ovcert -remove <coreid>  (eliminar o node cert e os trusted)
+ovcert -certreq
+
+8- DPS e GW
+Arrancar novamente os servicos
+Administration ... Certificates requests -- verificar que esta la o request do agente que fizemos request no passo anterior
+Aprovar
+Depois de todos os agentes terem os requests feitos e aprovados ir via GUI e fazer redeploy as politicas
+
+ou 
+
+#$TOPAZ_HOME/opr/bin/opr-agt.sh(.bat) –username <admin> -password
+<admin Password> -deploy –force –node_list | -nl <nodes comma
+separated> or –view_name | -vn <exact view names used for auto
+assignment>
+
+
+
+9- DPS
+ovcert –remove <SHA1_CA_Cert>
+ovcert –remove <SHA1_CA_Cert> -ovrg server
+$TOPAZ_HOME/opr/bin/opr-configure-certificates.bat -il  --- Abrir nova janela de DOS em modo admin e ir ate a pasta respectiva (C:\OBM\HPBSM\opr\bin) - correr o comando atras indicado
+
+
+10- GW
+ovcert -updatetrusted
+
+
+11- OA
+ovcert -updatetrusted
+
+
+12- DPS e GW
+ovcert –list
+	Verificar se so tem os certificados correctos e os trusted com ... _4096 no final
+
+openssl x509 -in CA_<ovrg_coreid>_4096_cert.pem –text   - outra janela de dos em modo admin e ir ate a pasta respectiva
+							C:\OBM\ProgramData\HP BTO Software\shared\server\datafiles\sec\ks\
+
+
+13- OA
+ovcert –list
+
+	Verificar se so tem os certificados correctos e os trusted com ... _4096 no final
+
+openssl x509 -in CA_<coreid>_4096_cert.pem –text   - outra janela de dos em modo admin e ir ate a pasta respectiva
+								C:\ProgramData\HP\HP BTO Software\datafiles\sec\ks
+
+
+
